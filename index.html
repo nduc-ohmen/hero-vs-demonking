@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hero vs Demon King</title>
+    
+    <!-- Link to pixel font -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    
+    <style>
+        body { 
+            font-family: 'Press Start 2P', cursive; 
+            background: url('https://cdn1.epicgames.com/ue/product/Screenshot/3a-1920x1080-02f233befdd4fcc1d215e35b13a8bc42.png?resize=1&w=1920') no-repeat center center fixed; 
+            background-size: cover;
+            text-align: center; 
+            color: #ffcc00; /* Bright yellow color for better contrast */
+            line-height: 1.6; /* Adjusted line spacing for better readability */
+        }
+        #game-container { 
+            max-width: 600px; 
+            margin: auto; 
+            padding: 20px; 
+            background-color: rgba(20, 20, 20, 0.8); /* Darker background for the container */
+            border-radius: 8px; 
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Add a shadow for depth */
+        }
+        .button { 
+            padding: 10px 20px; 
+            background-color: #ff5733; /* Bright contrasting button color */
+            color: #fff; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-family: 'Press Start 2P', cursive; /* Pixel font for buttons */
+        }
+        .button:disabled { 
+            background-color: #aaa; 
+        }
+        #inventory { 
+            margin-top: 20px; 
+            font-family: 'Press Start 2P', cursive; /* Pixel font for inventory */
+            line-height: 1.4; /* Adjusted line spacing for inventory */
+        }
+        #answer-input { 
+            font-family: 'Press Start 2P', cursive; /* Pixel font for answer input */
+            padding: 10px; 
+            border: none; 
+            border-radius: 5px; 
+            margin-top: 10px; 
+        }
+        #feedback {
+            font-family: 'Press Start 2P', cursive; /* Pixel font for feedback */
+            line-height: 1.4; /* Adjusted line spacing for feedback */
+        }
+        #boss-image {
+            margin-top: 20px;
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <script src="./gagu.js"></script>
+    <div id="game-container">
+        <h1>Hero vs Demon King</h1>
+        <p id="story-text">Welcome, hero! To defeat the Demon King, complete missions by answering questions correctly.</p>
+        <button id="start-mission" class="button">Start Mission</button>
+        
+        <div id="shop-section" style="display:none;">
+            <h3>Shop</h3>
+            <p>Coins: <span id="coin-count">0</span></p>
+            <button id="buy-magic" class="button">Buy Magic Item (10 Coins)</button>
+            <button id="buy-attack" class="button">Buy Attack Item (10 Coins)</button>
+            <button id="buy-defense" class="button">Buy Defense Item (10 Coins)</button>
+        </div>
+
+        <div id="question-section" style="display:none;">
+            <p id="npc-question"></p>
+            <input type="text" id="answer-input" placeholder="Type your answer">
+            <button id="submit-answer" class="button">Submit Answer</button>
+            <p id="feedback"></p>
+        </div>
+
+        <div id="inventory">
+            <h3>Inventory</h3>
+            <p>Magic Items: <span id="magic-count">0</span></p>
+            <p>Attack Items: <span id="attack-count">0</span></p>
+            <p>Defense Items: <span id="defense-count">0</span></p>
+            <p>Keys Collected: <span id="keys-count">0</span></p>
+        </div>
+
+        <!-- Boss Image Section -->
+        <div id="boss-section" style="display:none;">
+            <h3>Demon King</h3>
+            <img id="boss-image" src="" alt="Boss Image">
+        </div>
+    </div>
+
+    <script>
+        let magicCount = 0, attackCount = 0, defenseCount = 0, keysCount = 0, coinsCount = 0;
+        let questionType = 0; // 0: Magic, 1: Attack, 2: Defense (rotates)
+
+        // Boss images
+        const bossImages = {
+            normal: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.rottentomatoes.com%2Ftv%2Fboss&psig=AOvVaw1qMNAHTVjfAlzovAgFjUVv&ust=1728214235457000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCOC76e6R94gDFQAAAAAdAAAAABAE',
+            attack: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTfEOeOJ555voOZaU0Hdd6uInH89Fp_Evb8dw&s',
+            defeated: 'https://platform.vox.com/wp-content/uploads/sites/2/chorus/uploads/chorus_asset/file/8232671/bossbabycover.jpg?quality=90&strip=all&crop=11.206896551724,0,77.586206896552,100'
+        };
+
+        // Attack questions
+        const attackQuestions = [
+            { question: "What is the capital of France?", answer: "Paris", coins: 5 },
+            { question: "What planet is known as the Red Planet?", answer: "Mars", coins: 5 },
+            { question: "What is the largest mammal?", answer: "Blue Whale", coins: 5 },
+            { question: "What is 2 + 2?", answer: "4", coins: 5 },
+            { question: "Who wrote 'Hamlet'?", answer: "Shakespeare", coins: 5 }
+        ];
+
+        // Magic questions (true/false questions)
+        const magicQuestions = [
+            { question: "The sky is blue. True or False?", answer: "True", coins: 10 },
+            { question: "Fish can walk on land. True or False?", answer: "False", coins: 10 },
+            { question: "Fire is cold. True or False?", answer: "False", coins: 10 },
+            { question: "The sun rises in the east. True or False?", answer: "True", coins: 10 },
+            { question: "Water is a solid at 0 degrees Celsius. True or False?", answer: "False", coins: 10 }
+        ];
+
+        // Defense questions (multiple choice questions)
+        const defenseQuestions = [
+            { question: "What is the largest planet?", choices: ["Earth", "Mars", "Jupiter", "Saturn"], answer: "Jupiter", coins: 5 },
+            { question: "Who discovered gravity?", choices: ["Einstein", "Newton", "Galileo", "Tesla"], answer: "Newton", coins: 5 },
+            { question: "What is the capital of Italy?", choices: ["Rome", "Milan", "Venice", "Florence"], answer: "Rome", coins: 5 },
+            { question: "What is the smallest prime number?", choices: ["1", "2", "3", "5"], answer: "2", coins: 5 },
+            { question: "What gas do plants absorb?", choices: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Hydrogen"], answer: "Carbon Dioxide", coins: 5 }
+        ];
+
+        document.getElementById('start-mission').addEventListener('click', startMission);
+        document.getElementById('buy-magic').addEventListener('click', () => buyItem("Magic"));
+        document.getElementById('buy-attack').addEventListener('click', () => buyItem("Attack"));
+        document.getElementById('buy-defense').addEventListener('click', () => buyItem("Defense"));
+        document.getElementById('submit-answer').addEventListener('click', checkAnswer);
+        document.getElementById('answer-input').addEventListener('keypress', function (event) {
+            if (event.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        function startMission() {
+            document.getElementById('question-section').style.display = 'block';
+            document.getElementById('shop-section').style.display = 'block'; // Show shop section
+            askQuestion();
+        }
+
+        function askQuestion() {
+            let questionObj;
+
+            if (questionType === 0) {
+                questionObj = magicQuestions[Math.floor(Math.random() * magicQuestions.length)];
+                document.getElementById('npc-question').innerText = questionObj.question;
+            } else if (questionType === 1) {
+                questionObj = attackQuestions[Math.floor(Math.random() * attackQuestions.length)];
+                document.getElementById('npc-question').innerText = questionObj.question;
+            } else {
+                questionObj = defenseQuestions[Math.floor(Math.random() * defenseQuestions.length)];
+                let choicesText = questionObj.choices.map((choice, index) => `${index + 1}. ${choice}`).join(", ");
+                document.getElementById('npc-question').innerText = `${questionObj.question} (${choicesText})`;
+            }
+
+            document.getElementById('answer-input').value = ''; // Clear previous answer
+            questionType = (questionType + 1) % 3; // Rotate question type
+        }
+
+        function checkAnswer() {
+            let questionObj;
+            const userAnswer = document.getElementById('answer-input').value.trim();
+            const questionText = document.getElementById('npc-question').innerText;
+
+            if (magicQuestions.some(q => q.question === questionText)) {
+                questionObj = magicQuestions.find(q => q.question === questionText);
+                if (userAnswer.toLowerCase() === questionObj.answer.toLowerCase()) {
+                    coinsCount += questionObj.coins;
+                    document.getElementById('feedback').innerText = "Correct! You earned " + questionObj.coins + " coins.";
+                    document.getElementById('coin-count').innerText = coinsCount;
+                    askQuestion();
+                } else {
+                    document.getElementById('feedback').innerText = "Wrong! Try again.";
+                }
+            } else if (attackQuestions.some(q => q.question === questionText)) {
+                questionObj = attackQuestions.find(q => q.question === questionText);
+                if (userAnswer.toLowerCase() === questionObj.answer.toLowerCase()) {
+                    coinsCount += questionObj.coins;
+                    document.getElementById('feedback').innerText = "Correct! You earned " + questionObj.coins + " coins.";
+                    document.getElementById('coin-count').innerText = coinsCount;
+                    askQuestion();
+                } else {
+                    document.getElementById('feedback').innerText = "Wrong! Try again.";
+                }
+            } else if (defenseQuestions.some(q => q.question === questionText)) {
+                questionObj = defenseQuestions.find(q => q.question === questionText);
+                const correctAnswerIndex = questionObj.choices.indexOf(questionObj.answer);
+                const selectedAnswerIndex = questionObj.choices.indexOf(userAnswer);
+                if (selectedAnswerIndex !== -1 && selectedAnswerIndex === correctAnswerIndex) {
+                    coinsCount += questionObj.coins;
+                    document.getElementById('feedback').innerText = "Correct! You earned " + questionObj.coins + " coins.";
+                    document.getElementById('coin-count').innerText = coinsCount;
+                    askQuestion();
+                } else {
+                    document.getElementById('feedback').innerText = "Wrong! Try again.";
+                }
+            }
+        }
+
+        function buyItem(type) {
+            if (coinsCount >= 10) {
+                coinsCount -= 10;
+                document.getElementById('coin-count').innerText = coinsCount;
+
+                if (type === "Magic") {
+                    magicCount++;
+                    document.getElementById('magic-count').innerText = magicCount;
+                } else if (type === "Attack") {
+                    attackCount++;
+                    document.getElementById('attack-count').innerText = attackCount;
+                } else if (type === "Defense") {
+                    defenseCount++;
+                    document.getElementById('defense-count').innerText = defenseCount;
+                }
+            } else {
+                alert("Not enough coins!");
+            }
+        }
+
+        function startBossBattle() {
+            // Boss battle logic to be implemented
+            document.getElementById('boss-image').src = bossImages.defeated;
+            document.getElementById('boss-section').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
